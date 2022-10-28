@@ -22,7 +22,7 @@ A wrapper of the `rm` command, with additional checks.
 
 + This requires the [Nim](https://github.com/nim-lang/Nim) compiler.
 
-Once you have Nim installed, you can download and build with the following commands:
+Once you have Nim installed, you could download and build with the following commands:
 ```sh
 git clone https://github.com/sls1005/thoughtful-rm
 cd thoughtful_rm/src
