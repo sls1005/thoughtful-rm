@@ -58,7 +58,7 @@ proc isCurrentDir(path: string): bool {.inline.} =
   os.absolutePath(path) == os.getCurrentDir()
 
 proc isRootDir(path: string): bool {.inline.} =
-  (len(path) == 1) and (path[0] == '/')
+  (path.len == 1) and (path[0] == '/')
 
 proc main(): int =
   let
