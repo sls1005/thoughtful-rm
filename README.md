@@ -29,7 +29,7 @@ cd thoughtful_rm/src
 nim c thoughtful_rm.nim
 ```
 
-It is recommended to set `rm` as an alias for this executable.
+It is recommended to set "rm" as an alias for this executable.
 ```sh
 # ~/.profile
 alias rm=/path/to/thoughtful_rm
