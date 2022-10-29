@@ -1,7 +1,7 @@
 import std/[os, osproc, compilesettings, strutils]
 
 const
-  version = "thoughtful-rm 0.1.0"
+  version = "thoughtful-rm 0.1.1"
   usage = """
 usage: thoughtful_rm [options] <files>
 

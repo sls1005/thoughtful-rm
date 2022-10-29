@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Hsien-yu Chu"
 description   = "A wrapper of the rm command, that prevents accidental deletion."
 license       = "MIT"
