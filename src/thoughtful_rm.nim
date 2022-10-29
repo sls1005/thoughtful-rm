@@ -18,10 +18,10 @@ options:
 Normally, this program invokes the "rm" binary. Any flag not listed above is passed to "rm", along with other valid arguments.
 """
 
-proc printUsage {.inline.} =
+proc printUsage {.raises: [], inline.} =
   echo version, "\n\n", usage
 
-proc printVersion {.inline.} =
+proc printVersion {.raises: [], inline.} =
   const details = """
 Compiled with the "$1" backend & "--mm:$2."
 """.format(
@@ -30,18 +30,18 @@ Compiled with the "$1" backend & "--mm:$2."
   )
   echo version, "\n\n", details
 
-proc printErrMsg(msg: string) {.inline.} =
+proc printErrMsg(msg: string) {.raises: [IOError, ValueError], inline.} =
   stderr.write("\x1b[1;91m[Error]\x1b[0m $1\n" % msg)
 
-proc protectEverything {.inline.} =
+proc protectEverything {.raises: [IOError], inline.} =
   stderr.write("\x1b[1;91m[!]\x1b[0m It seems that you were trying to delete every file on the system, recursively.\n")
   quit(-1)
 
-proc ask(question: string): string {.inline.} =
+proc ask(question: string): string {.raises: [IOError], inline.} =
   stdout.write(question)
   return stdin.readLine()
 
-proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): uint8 =
+proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): uint8 {.raises: [OSError].} =
   # 0 if doesn't have (or if the dir is empty), 1 if it does but there's only 1 file in the dir, 2 if it does and the dir contains more than 1 files.
   var n: uint8 = 0
   for file in walkDir(dir, relative=useRelativePath):
@@ -51,31 +51,38 @@ proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): ui
       inc(n)
   return n
 
-proc fileOrDirOrSymlinkExists(path: string): bool {.inline.} =
+proc fileOrDirOrSymlinkExists(path: string): bool {.raises: [], inline.} =
   fileExists(path) or dirExists(path) or symlinkExists(path)
 
-proc isCurrentDir(path: string): bool {.inline.} =
+proc isCurrentDir(path: string): bool {.raises: [ValueError, OSError], inline.} =
   os.absolutePath(path) == os.getCurrentDir()
 
-proc isRootDir(path: string): bool {.inline.} =
-  (path.len == 1) and (path[0] == '/')
+{.push boundChecks: off.}
+proc isRootDir(path: string): bool {.raises: [], inline.} =
+  if len(path) == 1:
+    return (path[0] == '/')
+  else:
+    false
+{.pop.}
 
+{.push boundChecks: off, rangeChecks: off, overflowChecks: off.}
 proc main(): int =
   let
-    parameters = os.commandLineParams()
-    n = len(parameters)
+    n = os.paramCount() # n >= 0
   var
     files = newSeqOfCap[string](n)
-    opts, dirs: seq[string]
     noExternalCmdInvocation = false
+    opts, dirs: seq[string]
   result = 0
   if n == 0:
     printUsage()
     return
-  for param in parameters:
+  # 0 < n <= int.high
+  for k in 1 .. n:
+    var param: owned(string) = os.paramStr(k)
     if unlikely(param == ""):
       continue
-    elif param[0] == '-':
+    elif unlikely(param[0] == '-'):
       case param:
       of "--trm-help":
         printUsage()
@@ -92,9 +99,9 @@ proc main(): int =
     else:
       printErrMsg(param & " not found. Nothing deleted.")
       return 2
-
-  for file in files:
-    let dir = os.parentDir(file)
+  {.push assertions: off.}
+  for file in files: # len(files) <= n
+    var dir = os.parentDir(file)
     if likely(dir in dirs):
       continue
     elif unlikely(file.isRootDir()):
@@ -111,7 +118,6 @@ proc main(): int =
       let
         isCurrent = dir.isCurrentDir()
         dirIsRoot = dir.isRootDir()
-      dirs.add(dir)
       if files.hasAllFilesFrom(dir, useRelativePath=isCurrent) > 1:
         # "rm dir/*"
         if noExternalCmdInvocation and dirIsRoot:
@@ -120,7 +126,7 @@ proc main(): int =
           let
             folder = (
               if isCurrent:
-              "the current directory (\"$1\")" % getCurrentDir()
+              "the current directory (\"$1\")" % os.getCurrentDir()
               elif dirIsRoot:
                 "the root directory (\"/\")"
               else:
@@ -132,6 +138,7 @@ proc main(): int =
           if ans notin ["y", "yes"]:
             echo "Nothing deleted. Quitting..."
             return
+      dirs.add(move(dir))
   try:
     if noExternalCmdInvocation:
       for path in files:
@@ -149,6 +156,9 @@ proc main(): int =
   except OSError as e:
     printErrMsg(e.msg)
     return e.errorCode
+  {.pop.}
+{.pop.}
+
 
 when isMainModule:
   let res = main()
