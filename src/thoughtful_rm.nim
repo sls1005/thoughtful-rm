@@ -79,7 +79,7 @@ proc main(): int =
     return
   # 0 < n <= int.high
   for k in 1 .. n:
-    var param: owned(string) = os.paramStr(k)
+    var param = os.paramStr(k)
     if unlikely(param == ""):
       continue
     elif unlikely(param[0] == '-'):
