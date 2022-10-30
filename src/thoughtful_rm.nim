@@ -60,7 +60,7 @@ proc isCurrentDir(path: string): bool {.raises: [ValueError, OSError], inline.} 
 {.push boundChecks: off.}
 proc isRootDir(path: string): bool {.raises: [], inline.} =
   if len(path) == 1:
-    return (path[0] == '/')
+    return (path[0] == '/') # < bound check [disabled] >
   else:
     false
 {.pop.}
@@ -68,7 +68,7 @@ proc isRootDir(path: string): bool {.raises: [], inline.} =
 {.push boundChecks: off, rangeChecks: off, overflowChecks: off.}
 proc main(): int =
   let
-    n = os.paramCount() # n >= 0
+    n = os.paramCount() # n >= 0 | < range check [disabled] >
   var
     files = newSeqOfCap[string](n)
     noExternalCmdInvocation = false
@@ -78,11 +78,11 @@ proc main(): int =
     printUsage()
     return
   # 0 < n <= int.high
-  for k in 1 .. n:
+  for k in 1 .. n: # < overflow check (disabled) >
     var param = os.paramStr(k)
     if unlikely(param == ""):
       continue
-    elif unlikely(param[0] == '-'):
+    elif unlikely(param[0] == '-'): # < bound check [disabled] >
       case param:
       of "--trm-help":
         printUsage()
@@ -93,14 +93,14 @@ proc main(): int =
       of "--no-external-cmd-invocation":
          noExternalCmdInvocation = true
       else:
-        opts.add(param)
+        opts.add(param) # sinks
     elif likely fileOrDirOrSymlinkExists(param):
-      files.add(param)
+      files.add(param) # sinks
     else:
       printErrMsg(param & " not found. Nothing deleted.")
       return 2
   {.push assertions: off.}
-  for file in files: # len(files) <= n
+  for file in files: # len(files) <= n | < bound check [disabled] >
     var dir = os.parentDir(file)
     if likely(dir in dirs):
       continue
@@ -138,14 +138,16 @@ proc main(): int =
           if ans notin ["y", "yes"]:
             echo "Nothing deleted. Quitting..."
             return
-      dirs.add(move(dir))
+      dirs.add(dir) # sinks
+      # < overflow check [disabled] | (automatically inserted) assertion [disabled] >
   try:
     if noExternalCmdInvocation:
-      for path in files:
+      for path in files: # < bound check [disabled] >
         if os.getFileInfo(path).kind == pcDir:
           os.removeDir(path)
         else:
           os.removeFile(path)
+        # < overflow check [disabled] | (automatically inserted) assertion [disabled] >
     else:
       let res = osproc.startProcess(
         "rm",
