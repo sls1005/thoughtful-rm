@@ -60,7 +60,7 @@ proc isCurrentDir(path: string): bool {.raises: [ValueError, OSError], inline.} 
 {.push boundChecks: off.}
 proc isRootDir(path: string): bool {.raises: [], inline.} =
   if len(path) == 1:
-    return (path[0] == '/') # < bound check [disabled] >
+    return (path[0] == '/') # < (unnecessary) bound check [disabled] >
   else:
     false
 {.pop.}
@@ -78,11 +78,11 @@ proc main(): int =
     printUsage()
     return
   # 0 < n <= int.high
-  for k in 1 .. n: # < overflow check [disabled] >
+  for k in 1 .. n:
     var param = os.paramStr(k)
     if unlikely(param == ""):
       continue
-    elif unlikely(param[0] == '-'): # < bound check [disabled] >
+    elif unlikely(param[0] == '-'): # < (unnecessary) bound check [disabled] >
       case param:
       of "--trm-help":
         printUsage()
@@ -99,8 +99,9 @@ proc main(): int =
     else:
       printErrMsg(param & " not found. Nothing deleted.")
       return 2
+    # < (unnecessary) overflow check [disabled] >
   {.push assertions: off.}
-  for file in files: # len(files) <= n | < bound check [disabled] >
+  for file in files: # len(files) <= n | < (unnecessary) bound check [disabled] >
     var dir = os.parentDir(file)
     if likely(dir in dirs):
       continue
@@ -139,15 +140,15 @@ proc main(): int =
             echo "Nothing deleted. Quitting..."
             return
       dirs.add(dir) # dir sinks
-      # < overflow check [disabled] | (automatically inserted) assertion [disabled] >
+      # < (unnecessary) overflow check [disabled] | (automatically inserted) assertion [disabled] >
   try:
     if noExternalCmdInvocation:
-      for path in files: # < bound check [disabled] >
+      for path in files: # < (unnecessary) bound check [disabled] >
         if os.getFileInfo(path).kind == pcDir:
           os.removeDir(path)
         else:
           os.removeFile(path)
-        # < overflow check [disabled] | (automatically inserted) assertion [disabled] >
+        # < (unnecessary) overflow check [disabled] | (automatically inserted) assertion [disabled] >
     else:
       let res = osproc.startProcess(
         "rm",
