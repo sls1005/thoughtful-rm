@@ -78,7 +78,7 @@ proc main(): int =
     printUsage()
     return
   # 0 < n <= int.high
-  for k in 1 .. n: # < overflow check (disabled) >
+  for k in 1 .. n: # < overflow check [disabled] >
     var param = os.paramStr(k)
     if unlikely(param == ""):
       continue
@@ -93,9 +93,9 @@ proc main(): int =
       of "--no-external-cmd-invocation":
          noExternalCmdInvocation = true
       else:
-        opts.add(param) # sinks
+        opts.add(param) # param sinks
     elif likely fileOrDirOrSymlinkExists(param):
-      files.add(param) # sinks
+      files.add(param) # param sinks
     else:
       printErrMsg(param & " not found. Nothing deleted.")
       return 2
@@ -138,7 +138,7 @@ proc main(): int =
           if ans notin ["y", "yes"]:
             echo "Nothing deleted. Quitting..."
             return
-      dirs.add(dir) # sinks
+      dirs.add(dir) # dir sinks
       # < overflow check [disabled] | (automatically inserted) assertion [disabled] >
   try:
     if noExternalCmdInvocation:
