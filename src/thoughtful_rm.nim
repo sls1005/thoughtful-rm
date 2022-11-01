@@ -79,7 +79,7 @@ proc main(): int =
     return
   # 0 < n <= int.high
   for k in 1 .. n:
-    var param = os.paramStr(k)
+    let param = os.paramStr(k)
     if unlikely(param == ""):
       continue
     elif unlikely(param[0] == '-'): # < (unnecessary) bound check [disabled] >
@@ -102,7 +102,7 @@ proc main(): int =
     # < (unnecessary) overflow check [disabled] >
   {.push assertions: off.}
   for file in files: # len(files) <= n | < (unnecessary) bound check [disabled] >
-    var dir = os.parentDir(file)
+    let dir = os.parentDir(file)
     if likely(dir in dirs):
       continue
     elif unlikely(file.isRootDir()):
