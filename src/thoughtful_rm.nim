@@ -1,7 +1,7 @@
 import std/[os, osproc, compilesettings, strutils]
 
 const
-  version = "thoughtful-rm 0.1.1"
+  version = "thoughtful-rm 0.2.0"
   usage = """
 usage: thoughtful_rm [options] <files>
 
@@ -43,8 +43,13 @@ proc ask(question: string): string {.raises: [IOError], inline.} =
 
 proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): uint8 {.raises: [OSError].} =
   # 0 if doesn't have (or if the dir is empty), 1 if it does but there's only 1 file in the dir, 2 if it does and the dir contains more than 1 files.
+  # This does not count files whose names start with "."
   var n: uint8 = 0
   for file in walkDir(dir, relative=useRelativePath):
+    let filename = file.path.lastPathPart()
+    if likely(filename.len > 0):
+      if unlikely(filename[0] == '.'): # invisible
+        continue
     if not(file.path in self):
       return 0
     elif unlikely(n < 2):
