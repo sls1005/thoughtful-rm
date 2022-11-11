@@ -7,15 +7,14 @@ usage: thoughtful_rm [options] <files>
 
 options:
 
-  --help                          Show the usage of the "rm" binary.
-
   --trm-help                      Show this help message and exit.
 
   --trm-version                   Show version information and exit.
 
-  --no-external-cmd-invocation    Use this program not as a invoker of "rm", but as a file-deleter. It removes directories recursively. This option is NOT recommended. (Warning: It can be less safe than "rm".)
+  --no-external-cmd-invocation    Use this program not as a invoker of `rm`, but as a file-deleter. It removes directories recursively. This option is NOT recommended. (Warning: It can be less safe than `rm`.)
 
 Normally, this program invokes the "rm" binary. Any flag not listed above is passed to "rm", along with other valid arguments.
+For the usage of `rm`, see `--help`.
 """
 
 proc printUsage {.raises: [], inline.} =
@@ -31,16 +30,17 @@ Compiled with the "$1" backend & "--mm:$2."
   echo version, "\n\n", details
 
 proc printErrMsg(msg: string) {.raises: [IOError, ValueError], inline.} =
-  stderr.write("\x1b[1;91m[Error]\x1b[0m $1\n" % msg)
+  stderr.write("\x1b[1;31m[Error]\x1b[0m $1\n" % msg)
 
 proc protectEverything {.raises: [IOError], inline.} =
-  stderr.write("\x1b[1;91m[!]\x1b[0m It seems that you were trying to delete every file on the system, recursively.\n")
+  stderr.write("\x1b[1;31m[!]\x1b[0m It seems that you were trying to delete every file on the system, recursively.\n")
   quit(-1)
 
 proc ask(question: string): string {.raises: [IOError], inline.} =
   stdout.write(question)
   return stdin.readLine()
 
+{.push boundChecks: off.}
 proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): uint8 {.raises: [OSError].} =
   # 0 if doesn't have (or if the dir is empty), 1 if it does but there's only 1 file in the dir, 2 if it does and the dir contains more than 1 files.
   # This does not count files whose names start with "."
@@ -48,13 +48,15 @@ proc hasAllFilesFrom(self: seq[string]; dir: string, useRelativePath = true): ui
   for file in walkDir(dir, relative=useRelativePath):
     let filename = file.path.lastPathPart()
     if likely(filename.len > 0):
-      if unlikely(filename[0] == '.'): # invisible
+      if unlikely(filename[0] == '.'): # < (unnecessary) bound check [disabled] >
+        # file invisible
         continue
     if not(file.path in self):
       return 0
     elif unlikely(n < 2):
       inc(n)
   return n
+{.pop.}
 
 proc fileOrDirOrSymlinkExists(path: string): bool {.raises: [], inline.} =
   fileExists(path) or dirExists(path) or symlinkExists(path)
@@ -115,7 +117,7 @@ proc main(): int =
         protectEverything()
       else:
         let ans = ask(
-          "\x1b[93m[!]\x1b[0m Do you really want to remove the root directory (\"/\") ? (Say yes or no. Warning: You will lose everything!) "
+          "\x1b[1;33m[!]\x1b[0m Do you really want to remove the root directory (\"/\") ? (Say yes or no. Warning: You will lose everything!) "
         )
         if ans != "yes":
           echo "Nothing deleted. Quitting..."
@@ -139,7 +141,7 @@ proc main(): int =
                 "\"$1/\"" % dir
             )
             ans = ask(
-              "\x1b[1;95m[?]\x1b[0m Do you wish to delete all files and subdirectories from $1 ? [y/N] " % folder
+              "\x1b[1;35m[?]\x1b[0m Do you wish to delete all files and subdirectories from $1 ? [y/N] " % folder
             )
           if ans notin ["y", "yes"]:
             echo "Nothing deleted. Quitting..."
