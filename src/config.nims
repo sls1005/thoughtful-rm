@@ -1,3 +1,3 @@
---gc:orc
+--gc:arc
 --opt:speed
 --define:release
