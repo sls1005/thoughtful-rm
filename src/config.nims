@@ -1,3 +1,4 @@
 --gc:arc
 --opt:speed
+--threads:off
 --define:release
